@@ -14,11 +14,9 @@ using namespace Ast;
 // grammar:
 //
 // Statement
-//   ::= Declaration
-//
-// Declaration
 //   ::= "let"       Identifier ":" Type "=" Expression     [ Let ]
 //     | "let" "var" Identifier ":" Type "=" Expression     [ LetVar ]
+//     | "{" (Statement (";" Statement)*)? "}"              [ Block ]
 //
 // Type
 //   ::= "int"                                              [ IntTy ]
@@ -26,7 +24,7 @@ using namespace Ast;
 //
 // Expression
 //   ::= Integer                                            [ Int ]
-//     | Array                                              [ Array ]
+//     | "[" (Expression ("," Expression)*)? "]"            [ Array ]
 //     | Identifier                                         [ Var ]
 //     | Expression "+" Expression                          [ Add ]
 //
