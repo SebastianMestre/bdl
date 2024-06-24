@@ -5,6 +5,32 @@
 
 namespace Ast {
 
+
+#if 1 // Types
+struct Type {
+	enum class Tag { Int, Array };
+	Type(Tag tag_) : tag{tag_} {}
+
+	Tag tag;
+};
+
+struct IntTy : Type {
+	IntTy()
+	: Type(Tag::Int)
+	{}
+};
+
+struct ArrayTy : Type {
+	ArrayTy(Type* item_type_)
+	: Type(Tag::Array)
+	, item_type{item_type_}
+	{}
+
+	Type* item_type;
+};
+#endif
+
+#if 1 // Expressions
 struct Expr {
 	enum class Tag { Int, Array, Var, Add };
 	Expr(Tag tag_) : tag{tag_} {}
@@ -49,7 +75,9 @@ struct Add : Expr {
 	Expr* lhs;
 	Expr* rhs;
 };
+#endif
 
+#if 1 // Statements
 struct Stmt {
 	enum class Tag { Let, LetVar };
 	Stmt(Tag tag_) : tag{tag_} {}
@@ -58,26 +86,31 @@ struct Stmt {
 };
 
 struct Let : Stmt {
-	Let(std::string name_, Expr* expr_)
+	Let(std::string name_, Type* type_, Expr* expr_)
 	: Stmt(Tag::Let)
 	, name{std::move(name_)}
+	, type{type_}
 	, expr{expr_}
 	{}
 
 	std::string name;
+	Type* type;
 	Expr* expr;
 };
 
 struct LetVar : Stmt {
-	LetVar(std::string name_, Expr* expr_)
+	LetVar(std::string name_, Type* type_, Expr* expr_)
 	: Stmt(Tag::LetVar)
 	, name{std::move(name_)}
+	, type{type_}
 	, expr{expr_}
 	{}
 
 	std::string name;
+	Type* type;
 	Expr* expr;
 };
+#endif
 
 void dump_expr(Expr* expr) {
 	switch (expr->tag) {
@@ -91,7 +124,7 @@ void dump_expr(Expr* expr) {
 		auto sep = "";
 		for (auto item : e->items) {
 			std::cout << sep;
-			sep = "; ";
+			sep = ", ";
 			dump_expr(item);
 		}
 		std::cout << "}";
@@ -111,17 +144,36 @@ void dump_expr(Expr* expr) {
 	}
 }
 
+void dump_type(Type* type) {
+	switch (type->tag) {
+	case Type::Tag::Int: {
+		auto e = static_cast<IntTy*>(type);
+		std::cout << "IntTy {}";
+	} break;
+	case Type::Tag::Array: {
+		auto e = static_cast<ArrayTy*>(type);
+		std::cout << "ArrayTy {";
+		dump_type(e->item_type);
+		std::cout << "}";
+	} break;
+	}
+}
+
 void dump_stmt(Stmt* stmt) {
 	switch (stmt->tag) {
 	case Stmt::Tag::Let: {
 		auto e = static_cast<Let*>(stmt);
 		std::cout << "Let {" << e->name << ", ";
+		dump_type(e->type);
+		std::cout << ", ";
 		dump_expr(e->expr);
 		std::cout << "}";
 	} break;
 	case Stmt::Tag::LetVar: {
 		auto e = static_cast<LetVar*>(stmt);
 		std::cout << "LetVar {" << e->name << ", ";
+		dump_type(e->type);
+		std::cout << ", ";
 		dump_expr(e->expr);
 		std::cout << "}";
 	} break;

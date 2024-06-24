@@ -1,6 +1,7 @@
 #include "ast.hpp"
 #include "interpreter.hpp"
 #include "parser.hpp"
+#include "typechecker.hpp"
 
 #include <iostream>
 #include <utility>
@@ -12,6 +13,13 @@ int main() {
 	Ast::dump_stmt(stmt);
 	std::cout << "\n";
 
-	Interpreter::Evaluator evaluator;
-	evaluator.exec(stmt);
+	{
+		Typecheck::Typechecker typechecker;
+		typechecker.visit(stmt);
+	}
+
+	{
+		Interpreter::Evaluator evaluator;
+		evaluator.exec(stmt);
+	}
 }

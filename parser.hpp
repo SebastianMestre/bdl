@@ -37,12 +37,17 @@ struct Parser {
 				std::string name = source.substr(start, finish - start);
 
 				skip_whitespace();
+				if (!eat(':')) syntax_error();
+
+				Type* type = parse_type();
+
+				skip_whitespace();
 				if (!eat('=')) syntax_error();
 
 				skip_whitespace();
 				Expr* expr = parse_expr();
 
-				return new LetVar {std::move(name), expr};
+				return new LetVar {std::move(name), type, expr};
 			} else {
 				int start = cursor;
 
@@ -57,16 +62,36 @@ struct Parser {
 				std::string name = source.substr(start, finish - start);
 
 				skip_whitespace();
+				if (!eat(':')) syntax_error();
+
+				Type* type = parse_type();
+
+				skip_whitespace();
 				if (!eat('=')) syntax_error();
 
 				skip_whitespace();
 				Expr* expr = parse_expr();
 
-				return new Let {std::move(name), expr};
+				return new Let {std::move(name), type, expr};
 			}
 		}
 
 		syntax_error();
+	}
+
+	Type* parse_type() {
+		skip_whitespace();
+		if (match("int") && (eof(3) || !is_identifier_char(source[cursor+3]))) {
+			cursor += 3;
+			return new IntTy {};
+		} else if (eat('[')) {
+			Type* element_type = parse_type();
+			skip_whitespace();
+			if (!eat(']')) syntax_error();
+			return new ArrayTy {element_type};
+		} else {
+			syntax_error();
+		}
 	}
 
 	Expr* parse_expr() {
