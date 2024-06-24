@@ -218,6 +218,7 @@ struct Evaluator {
 		} break;
 		case Ast::Expr::Tag::Var: {
 			/* TODO: implement */
+			assert(0);
 		} break;
 		case Ast::Expr::Tag::Add: {
 			auto e = static_cast<Ast::Add*>(expr);
@@ -240,6 +241,7 @@ struct Evaluator {
 			dump_value(value);
 			std::cout << "\n";
 			push_variable(std::move(value));
+			return;
 		} break;
 		case Ast::Stmt::Tag::LetVar: {
 			auto e = static_cast<Ast::LetVar*>(stmt);
@@ -248,8 +250,17 @@ struct Evaluator {
 			dump_value(value);
 			std::cout << "\n";
 			push_variable(std::move(value));
+			return;
 		} break;
+		case Ast::Stmt::Tag::Block: {
+			auto e = static_cast<Ast::Block*>(stmt);
+			for (auto item : e->items) {
+				exec(item);
+			}
+			return;
 		}
+		}
+		assert(0);
 	}
 
 };

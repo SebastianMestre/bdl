@@ -79,7 +79,7 @@ struct Add : Expr {
 
 #if 1 // Statements
 struct Stmt {
-	enum class Tag { Let, LetVar };
+	enum class Tag { Let, LetVar, Block };
 	Stmt(Tag tag_) : tag{tag_} {}
 
 	Tag tag;
@@ -109,6 +109,15 @@ struct LetVar : Stmt {
 	std::string name;
 	Type* type;
 	Expr* expr;
+};
+
+struct Block : Stmt {
+	Block(std::vector<Stmt*> items_)
+	: Stmt(Tag::Block)
+	, items{std::move(items_)}
+	{}
+
+	std::vector<Stmt*> items;
 };
 #endif
 
@@ -177,6 +186,17 @@ void dump_stmt(Stmt* stmt) {
 		dump_expr(e->expr);
 		std::cout << "}";
 	} break;
+	case Stmt::Tag::Block: {
+		auto e = static_cast<Block*>(stmt);
+		std::cout << "Block {";
+		auto sep = "";
+		for (auto item : e->items) {
+			std::cout << sep;
+			sep = ", ";
+			dump_stmt(item);
+		}
+		std::cout << "}";
+	}
 	}
 }
 

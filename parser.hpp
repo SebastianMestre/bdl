@@ -41,7 +41,18 @@ struct Parser {
 	Stmt* parse_stmt() {
 
 		skip_whitespace();
-		if (match("let") && !eof(3) && isspace(source[cursor+3])) {
+		if (eat('{')) {
+			std::vector<Stmt*> items;
+			skip_whitespace();
+			if (!eat('}')) while (true) {
+				items.push_back(parse_stmt());
+				skip_whitespace();
+				if (eat(';')) continue;
+				if (eat('}')) break;
+				syntax_error();
+			}
+			return new Ast::Block {std::move(items)};
+		} else if (match("let") && !eof(3) && isspace(source[cursor+3])) {
 			cursor += 3;
 
 			skip_whitespace();

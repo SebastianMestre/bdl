@@ -30,12 +30,15 @@ struct Typechecker {
 			for (auto item : e->items) {
 				check(item, item_type);
 			}
+			return;
 		} break;
 		default: {
 			auto actual_type = infer(expr);
 			if (not equals(type, actual_type)) type_error();
+			return;
 		} break;
 		}
+		assert(0);
 	}
 
 	Ast::Type* infer(Ast::Expr* expr) {
@@ -71,12 +74,22 @@ struct Typechecker {
 		case Ast::Stmt::Tag::Let: {
 			auto e = static_cast<Ast::Let*>(stmt);
 			check(e->expr, e->type);
+			return;
 		} break;
 		case Ast::Stmt::Tag::LetVar: {
 			auto e = static_cast<Ast::LetVar*>(stmt);
 			check(e->expr, e->type);
+			return;
 		} break;
+		case Ast::Stmt::Tag::Block: {
+			auto e = static_cast<Ast::Block*>(stmt);
+			for (auto item : e->items) {
+				visit(item);
+			}
+			return;
 		}
+		}
+		assert(0);
 	}
 
 	bool equals(Ast::Type* a, Ast::Type* b) {
