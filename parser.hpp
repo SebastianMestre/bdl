@@ -10,6 +10,29 @@
 namespace Parser {
 using namespace Ast;
 
+// This is a predictive recursive descent parser that implements the following
+// grammar:
+//
+// Statement
+//   ::= Declaration
+//
+// Declaration
+//   ::= "let"       Identifier ":" Type "=" Expression     [ Let ]
+//     | "let" "var" Identifier ":" Type "=" Expression     [ LetVar ]
+//
+// Type
+//   ::= "int"                                              [ IntTy ]
+//     | "[" Type "]"                                       [ ArrayTy ]
+//
+// Expression
+//   ::= Integer                                            [ Int ]
+//     | Array                                              [ Array ]
+//     | Identifier                                         [ Var ]
+//     | Expression "+" Expression                          [ Add ]
+//
+// Identifier ::= /[a-zA-Z_][a-zA-Z_0-9]*/
+// Integer    ::= "0" | /[1-9][0-9]*/
+
 struct Parser {
 
 	int cursor;
@@ -112,7 +135,7 @@ struct Parser {
 		skip_whitespace();
 		if (eof()) syntax_error();
 		if (match('0')) {
-			if (eof(1) || isspace(source[cursor+1])) {
+			if (eof(1) || !is_identifier_char(source[cursor+1])) {
 				cursor++;
 				return new Int {0};
 			} else {
