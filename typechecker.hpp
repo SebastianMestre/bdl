@@ -8,6 +8,8 @@ namespace Typecheck {
 
 struct Typechecker {
 
+	std::vector<std::pair<std::string, Ast::Type*>> bindings;
+
 // Bidirectional type checking.
 //
 // void check(Expr* expr, Type* type);
@@ -56,8 +58,13 @@ struct Typechecker {
 			return new Ast::ArrayTy {item_type};
 		} break;
 		case Ast::Expr::Tag::Var: {
-			auto e = static_cast<Ast::Array*>(expr);
-			assert(0); // TODO
+			auto e = static_cast<Ast::Var*>(expr);
+			int i = bindings.size();
+			while (i >= 0 && bindings[i].first != e->name) {
+				i--;
+			}
+			if (i < 0) type_error();
+			return bindings[i].second;
 		} break;
 		case Ast::Expr::Tag::Add: {
 			auto e = static_cast<Ast::Add*>(expr);
@@ -74,17 +81,23 @@ struct Typechecker {
 		case Ast::Stmt::Tag::Let: {
 			auto e = static_cast<Ast::Let*>(stmt);
 			check(e->expr, e->type);
+			bindings.emplace_back(e->name, e->type);
 			return;
 		} break;
 		case Ast::Stmt::Tag::LetVar: {
 			auto e = static_cast<Ast::LetVar*>(stmt);
 			check(e->expr, e->type);
+			bindings.emplace_back(e->name, e->type);
 			return;
 		} break;
 		case Ast::Stmt::Tag::Block: {
 			auto e = static_cast<Ast::Block*>(stmt);
+			int const binding_count_on_enter = bindings.size();
 			for (auto item : e->items) {
 				visit(item);
+			}
+			while (bindings.size() > binding_count_on_enter) {
+				bindings.pop_back();
 			}
 			return;
 		}

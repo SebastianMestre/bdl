@@ -94,6 +94,7 @@ struct Value {
 			return Value::Array(std::move(items));
 		} break;
 		}
+		assert(0);
 	}
 
 	~Value() {
@@ -154,6 +155,7 @@ struct Evaluator {
 	static constexpr int max_stack = 1000;
 
 	struct Variable {
+		std::string name;
 		Value value;
 	};
 
@@ -178,8 +180,8 @@ struct Evaluator {
 		return std::move(*--temp_ptr);
 	}
 
-	void push_variable(Value x) {
-		*variable_ptr++ = {std::move(x)};
+	void push_variable(std::string name, Value x) {
+		*variable_ptr++ = {std::move(name), std::move(x)};
 	}
 
 	void pop_variable() {
@@ -217,8 +219,13 @@ struct Evaluator {
 			return push(Value::Array(std::move(items)));
 		} break;
 		case Ast::Expr::Tag::Var: {
-			/* TODO: implement */
-			assert(0);
+			auto e = static_cast<Ast::Var*>(expr);
+			auto ptr = variable_ptr - 1;
+			while (ptr >= frame_ptr && ptr->name != e->name) {
+				ptr--;
+			}
+			assert(ptr >= frame_ptr);
+			return push(Value::clone(ptr->value));
 		} break;
 		case Ast::Expr::Tag::Add: {
 			auto e = static_cast<Ast::Add*>(expr);
@@ -240,7 +247,7 @@ struct Evaluator {
 			auto value = pop();
 			dump_value(value);
 			std::cout << "\n";
-			push_variable(std::move(value));
+			push_variable(e->name, std::move(value));
 			return;
 		} break;
 		case Ast::Stmt::Tag::LetVar: {
@@ -249,14 +256,16 @@ struct Evaluator {
 			auto value = pop();
 			dump_value(value);
 			std::cout << "\n";
-			push_variable(std::move(value));
+			push_variable(e->name, std::move(value));
 			return;
 		} break;
 		case Ast::Stmt::Tag::Block: {
 			auto e = static_cast<Ast::Block*>(stmt);
+			auto const variable_ptr_on_enter = variable_ptr;
 			for (auto item : e->items) {
 				exec(item);
 			}
+			variable_ptr = variable_ptr_on_enter;
 			return;
 		}
 		}
